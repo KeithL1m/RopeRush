@@ -9,6 +9,9 @@ public class Pendulum : MonoBehaviour
 	public float speed = 4;
 	public float limit = 75f; //Limit in degrees of the movement
 	public bool randomStart = false; //If you want to modify the start position
+	[Tooltip("Where in the swing cycle this pendulum starts, in degrees (360 = one full swing). Stagger neighbours " +
+	         "(e.g. 0 / 120 / 240) so they don't swing in step. Added on top of randomStart's offset.")]
+	public float phaseOffsetDegrees = 0f;
 	private float random = 0;
 
 	private Rigidbody _rb;
@@ -47,7 +50,8 @@ public class Pendulum : MonoBehaviour
 		float time = NetworkManager.Singleton != null
 			? NetworkManager.Singleton.ServerTime.TimeAsFloat
 			: Time.time;
-		float angle = limit * Mathf.Sin(time + random * speed);
+		// Note: speed only scales the randomStart offset; every pendulum swings once per 2π s.
+		float angle = limit * Mathf.Sin(time + random * speed + phaseOffsetDegrees * Mathf.Deg2Rad);
 		Quaternion localRotation = Quaternion.Euler(0, 90, angle); // Change the y value to 0 to change swinging direction
 		Quaternion worldRotation = transform.parent != null
 			? transform.parent.rotation * localRotation

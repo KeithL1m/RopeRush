@@ -26,7 +26,7 @@ namespace SyncRush
         // without running the course. Also marks every checkpoint before Finish as passed (so
         // finishing isn't rejected) and makes the pad the respawn point. Remove with F8 auto-run.
         [Header("TEMP debug: F9 skip to end")]
-        [SerializeField] private Vector3 _debugSkipPoint = new(-278.2f, 32.96f, 7.7f);
+        [SerializeField] private Vector3 _debugSkipPoint = new(-212.68f, 32.84f, 6.16f); // course at 0.8 (2026-10-30)
 
         [Tooltip("Sideways spacing between players at the skip point, so they don't land on each other.")]
         [SerializeField] private float _debugSkipSpacing = 3f;

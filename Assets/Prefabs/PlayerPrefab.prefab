@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SyncRush.PlayerRaceProgress
   ShowTopMostFoldoutHeaderGroup: 1
-  _debugSkipPoint: {x: -278.2, y: 32.96, z: 7.7}
+  _debugSkipPoint: {x: -212.68002, y: 32.84, z: 6.16}
   _debugSkipSpacing: 3
   _lobbySpacing: 4
 --- !u!114 &952393235015384072
@@ -248,13 +248,11 @@ MonoBehaviour:
   _leashDragFactor: 1
   _leashRespawnGrace: 3
   _aimAngle: 25
-  _previewRangeFactor: 2
   _ropeMaterial: {fileID: 2100000, guid: 820a9fa3f9e11164e8c529a5910f533d, type: 2}
   _slackColor: {r: 0, g: 0, b: 0, a: 1}
   _tautColor: {r: 1, g: 0, b: 0, a: 1}
   _ropeWidth: 0.2
   _snapWidthFactor: 0.6
-  _previewWidth: 0.15
   _ropeSegments: 24
   _snapColor: {r: 0.35, g: 0, b: 0, a: 1}
   _snapSound: {fileID: 8300000, guid: 16837fab24989d040a07fc6a255b3ac5, type: 3}

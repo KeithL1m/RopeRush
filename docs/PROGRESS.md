@@ -18,15 +18,15 @@ override code defaults, so tune them there. ⭐ = most important for the M1 gate
 | 2 ⭐ | **Tow feel** | `Tow Speed Fraction` 1.5, `Tow Full Pull Length` 20 m, `Tow Slack Length` 10 m, `Tow Leader Speed Multiplier` 0.85 | Felt "a bit weak" with auto-run (2026-10-12). With a human partner: strong enough? If not, make it more than catch-up (e.g. water-ski burst for both) |
 | 3 | **Tow path-following** | `Trail Spacing` 1 m, `Trail Reach Radius` 2 m | Does following the leader's path feel right, or is a straight-line pull better? (agreed fallback) |
 | 4 | **Slingshot** | range 36 m, launch 12–40 m/s + 14 lift, tension 1.2 s | Felt right 2026-10-07. Re-check now that the leash exists: landing past the leash drags the anchor along. Good synergy or annoying? |
-| 5 | **Rival slingshot cooldown** | `Rival Cooldown` 15 s (teammate 6 s) | Still abusable for sabotage? Too long? |
+| 5 | **Rival slingshot cooldown** | `Rival Cooldown` 15 s (teammate 6 s), confirmed in play 2026-10-30 | Still abusable for sabotage? Too long? |
 | 6 | **Rope look** | `RopeVisual`: slack ×1.2 / +3 m, damping 0.985, 24 points; `Snap Width Factor` 0.6 | Too floaty, stiff or long? Is the rigid thinning look clear enough past the leash? |
 | 7 | **Aim targeting** | `Aim Angle` 25° | Easy to pick the intended player in a crowd? Marker simplified 2026-10-30 (below): still clear enough who you'll grab? |
 | 8 | **Everything over real Relay** (also the M0 gate) | — | Leash and Tow both read the partner's position ~0.1 s late: any rubber-banding? Slingshot and hazards with real latency? |
 | 9 | ~~**3-player teams**~~ | Decided 2026-10-16: the host picks Teams or Free-for-all in the lobby (see "Start here" item T) | — |
 | 10 | **Course layout** | greybox (2026-09-16) | User said it doesn't fully match what they're picturing yet |
-| 11 ⭐ | **Final stretch length** | `FinalStretchZone` in `GameScene`: all of `Platform (4)`, x −287.2 → −303 (~17 m) | GDD says ~10 m (≈25 m at this scale). 17 m chosen so the snap happens on landing, not mid-air over the `Bounce (8)` gap. Long enough for shoving to matter? |
+| 11 ⭐ | **Final stretch length** | `FinalStretchZone` in `GameScene`: x −242.4 → −255.1 (~12.6 m since the 0.8 course scale, 2026-10-30) | GDD says ~10 m (≈25 m at this scale). 17 m chosen so the snap happens on landing, not mid-air over the `Bounce (8)` gap. Long enough for shoving to matter? |
 | 12 | **Shove** | `PlayerShove`: range 5 m (centre to centre), cone 60°, force 16 m/s + 6 up, stun 0.3 s, cooldown 1.5 s | Funny or frustrating? Can you get shoved off the platform edge (intended)? **Shoving teammates** (GDD design, user unsure 2026-10-16): fun betrayal or feels wrong? |
-| 15 ⭐ | **Player vs course scale** | Player 5 m tall (`CharacterController` 5 × r1.25, Y Bot scaled 2.67); course greybox built for that | User (2026-10-16): the player looks quite small next to the course, more so with the Y Bot model. Either the player or the course needs rescaling so everything fits. See "Scale note" under "Start here" |
+| 15 | ~~**Player vs course scale**~~ | Decided 2026-10-30: player stays 5 m, course shrunk to 0.8, pendulums/spinner enlarged | Done (see "Scale trial" under "Start here"). Still judge in play: bounce height, knockback distance |
 | 14 | **Run animation speed** | `PlayerAnimator._runAnimSpeed` 9 m/s, blend tree Running at 7 m/s | Do the feet slide or skate when running / sprinting? |
 | 13 | **Snap look & sound** | `RopeVisual`: recoil 30 m/s (35% when slack), fade 1.5 s; `RopeSnap_TEMP.wav` (synthesized placeholder) | Does the SNAP read clearly? Replace the sound in M4 |
 
@@ -46,9 +46,12 @@ bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: wor
 1. **Test pass on the untested 2026-10-16 work** (host + MPPM; restart the virtual players, the prefab changed):
    - ~~**Game modes** (item T)~~: ✅ user-tested 2026-10-30, dropdown resized the same day and approved.
    - ~~**Y Bot character** (item C)~~: ✅ user-tested 2026-10-30, spawn rope fix ✅ too.
-   - **Lobby lineup**: joiners stand side by side instead of on top of each other.
-2. **Decide player vs course scale** (backlog row 15, "Scale note" below). The user finds the player too small for the
-   course. Decide before ragdoll and before M3 chunks, since both get tuned/authored at one scale.
+   - ~~**Lobby lineup**~~: ✅ user-tested 2026-10-30 ("working perfectly").
+   - Also ✅ 2026-10-30 (user): spawn points (`SpawnPointRegistry`), rope past 36 m (rigid, thinning, darkening) and
+     the 15 s rival / 6 s teammate Slingshot cooldown. **Every one-machine test is now done.**
+2. ~~**Decide player vs course scale**~~: done 2026-10-30, course at 0.8 (see "Scale trial" below). **Play-test the
+   rescaled course** (restart the VP): full race, falls/respawns at each checkpoint, bounce pads (incl. `Bounce (8)` →
+   final platform), pendulum/spinner hits, F9 skip.
 3. **Ragdoll** (`RagdollController`, GDD §5.2) on the Y Bot skeleton, then **Pull (Recover)**. The last big M1 pieces.
    **Present a plan first** (the user wants plans before big features, see "Working with the user").
 4. **Jump/fall animation** (small): Y Bot idles/runs in mid-air today. Needs a Mixamo jump/fall clip from the user
@@ -73,6 +76,61 @@ Also clarified for the user: no rope between rivals / in FFA is by design; the r
 - The user tests in Play Mode and reports back; record results in the relevant item and the backlog.
 - The user commits themselves; don't commit unless asked.
 
+
+**Scale trial (2026-10-30), now adopted: course at 0.8, made playable (last bullet). History:** the user likes the course but wants the player bigger relative to it. Agreed
+that shrinking the course is the cheaper route (keeps every tuned player/rope/camera value). A visual trial is **saved
+in `GameScene`** (the user saved it at 0.7 when switching scenes; then saved again at the new values): all course
+objects under `_ScaleTrial_CourseRoot` (pivot at the spawn centre, floor top y 32.36), plus two 5 m Y Bot references
+`_ScaleTrial_PlayerRef_0/1` (start, pendulums). User feedback on 0.7: "doesn't look too bad", but asked for **0.8**, and
+obstacles looked less intimidating, "especially the pendulum". Now: course 0.8, pendulums ×1.3 inside it (ball 10.3 m,
+pivot raised to keep the 0.32 m floor gap; they swing across the course, so no overlap), spinner `RotationX` ×1.15.
+Pendulums then spread evenly along `Platform (1)` (user request): x −10.74 / −30.38 / −50.02, 10 m in from each end,
+19.6 m apart (was 14.7 m, bunched toward the start). **User: "the scale is looking pretty good right now"** (2026-10-30),
+so 0.8 + bigger obstacles is the direction; next is the plan to make it playable (respawn points, hazard values,
+remove the trial wrapper/refs).
+- Pendulum timing (2026-10-30, user: 2nd and 3rd swung nearly in step): `Pendulum.cs` gained `phaseOffsetDegrees`
+  (like `Rotator`/`RotationPlatform`). The three scene pendulums now use 0° / 120° / 240° with `randomStart` off.
+  Root cause: the old offset was `random × speed` = 0–2 rad from a position hash, under a third of a cycle, so moving
+  the pendulums happened to put two nearly in step. Also found: `speed` doesn't change swing speed (every pendulum
+  swings once per 2π ≈ 6.3 s); left as is, noted in the code. ✅ User: "looks good" (2026-10-30).
+- **Trial wrapper removed + sizes pushed to prefabs (2026-10-30, user request):** `_ScaleTrial_CourseRoot` removed,
+  its 0.8 baked into each object (checked: no world position/size changed). Pendulum balls ×1.2 (ball 12.3 m, pivots
+  raised to y 63.43 to keep the 0.32 m floor gap). Then sizes applied to the prefabs in `Assets/Prefabs/Obstacles/`
+  (only `GameScene` uses them; 0 renderers changed world size): `Pendulum` root 3 → 10.29, `Ball` 1 → 1.2; `Bounce`
+  root (2.28, 1, 1.83) → (5.34, 0.8, 6.34); `RotationX` root → (77.82, 0.37, 10.72) + its bar child; `RotationPlat`
+  root (15, 0.25, 5) → (12, 0.2, 28.82), the middle platform's length (the other two keep their own as overrides).
+  **Kept as scene overrides on purpose:** pendulum phase offsets + `randomStart`, positions, `RotationPlat` speed 40
+  (prefab still 60, pre-existing). Diffs also contain Unity 6 reserialization noise (new default fields, Rigidbody
+  `m_Drag` → `m_LinearDamping`), not real changes. Prefab backups: `Backups/Prefabs_before-scale-trial_2026-10-30/`.
+  The user removed the `_ScaleTrial_PlayerRef` figures and made `Assets/Prefabs/Player reference.prefab` (5 m Y Bot)
+  for future size checks.
+- **0.8 course made playable (2026-10-30, user go-ahead).** Positions mapped around the trial pivot (49.4, 32.36, 0),
+  distances ×0.8. Angle-based hazards (`RotationPlatform`, `Rotator`, `Pendulum` swing) need nothing.
+  - `RaceCheckpoint._respawnPoint` (scene): Starting (47.00, 32.84, 0.53), Checkpoint (−67.89, …, 0.53), Checkpoint2
+    (−123.41, …, 0.53), Finish (−233.32, 32.84, 5.60). Raycast check: every respawn and spawn point is over solid platform.
+  - `PlayerPrefab` `_debugSkipPoint` (F9) → (−212.68, 32.84, 6.16), on the moved `Bounce (8)` pad (checked); code default too.
+  - `Bounce.prefab`: pad `force` 30.8 → 27.55, outer trigger 10 → 8.94 (×√0.8, so apex height ×0.8: ~24 → ~19 m).
+    Note: the outer `Bounce` script is **enabled** in the prefab (PROGRESS 2026-09-23 said disabled). Harmless, since
+    `Launch` takes the stronger upward speed, but worth knowing.
+  - `PendulumHazard` (Pendulum.prefab Ball) and `SpinnerHazard` (RotationX.prefab) `_knockbackForce` 25 → 20 m/s
+    (knocked 80% as far); `_upwardBoost` 7 kept so hits still arc. Spinner's tip-speed minimum scales by itself.
+  - Spawn points and `FinalStretchZone` scaled with the course already (spawns now 8 m apart, was 10).
+  - **Not yet played.** Restart the MPPM virtual player (PlayerPrefab changed).
+- Pendulum ball 1.2 → **1.1** in the prefab (2026-10-30, user: standing gap between pendulums too narrow). Ball 11.3 m,
+  standing gap along the course 7.3 → **8.3 m**, pivots lowered to y 62.92 (floor gap 0.32 m kept).
+  Gotcha found: `Pendulum (1)/(2)` had their own Ball scale overrides, so they ignored the prefab change. Cleaned up:
+  37 scene scale overrides on obstacle instances that just repeated the prefab value were reverted (no size changed),
+  so instances now follow future prefab edits. Only real ones kept: `RotationPlat` and `RotationPlat (2)` lengths.
+- ✅ **User playtest 2026-10-30: "the whole course seems to function well"** at 0.8 (respawns, pads, hazards, F9).
+  Feedback: the `RotationX` area got much easier to pass. `RotationX.prefab` `Rotator.speed` 0.4 → **0.5** (40 → 50°/s,
+  +25%, offsetting the 0.8 shrink); no scene override, so the instance follows. Knockback minimum (tip speed × 1.3)
+  rises with it. Not yet re-played.
+Rotating gauntlet platforms and bounce pads left at 0.8 (enlarging them closes the jump gaps). **Not playable yet**
+(respawn points are world-space, hazard values unscaled), view in the Scene view only. **Backup of the
+pre-trial scene:** `Backups/GameScene_before-scale-trial_2026-10-30.unity` (outside `Assets/`, hash-identical to commit
+`9e4a296`'s copy). If it was accidentally saved: copy that file back over `Assets/Scenes/GameScene.unity`, or
+`git checkout -- Assets/Scenes/GameScene.unity`. If adopted for real, still to handle: `RaceCheckpoint._respawnPoint`
+(world-space), and hazard values in world units (bounce force, mover distances/speeds, spinner knockback).
 
 **Scale note (2026-10-16, decision pending):** the user finds the player too small for the course now that it has a
 real model (backlog row 15). A 7 m player (model + collision, ×1.4) was started and **reverted at the user's request**;
@@ -205,7 +263,7 @@ respawn → no yank for 3 s.
 | Aim targeting (pick the player nearest screen centre, 25° cone) | ✅ User, 3 players |
 | Range preview line + distance marker (green in range, amber out of range) | ✅ User |
 | HUD labels renamed "Tether" → "Slingshot" | ✅ User |
-| Rope visuals: sag that straightens with tension, white→red tint | ✅ User screenshot from the partner's (client) view, so rope state replicates. Shake past 36 m not specifically checked |
+| Rope visuals: sag that straightens with tension, white→red tint | ✅ User screenshot from the partner's (client) view, so rope state replicates. Past-36 m look (now rigid + thinning, not shake) ✅ user 2026-10-30 |
 
 **Fixed 2026-10-12 (since committed):** the rope was invisible in the first test. It attaches at capsule centre (2.5 m up)
 and sagged up to 4 m, so its middle was buried in the floor. Sag is now capped at 12% of rope length (`_sagPerMetre`)
@@ -337,7 +395,7 @@ if Start Lobby says "Something went wrong connecting". `[PushDebug]` logging is 
 | `RaceCheckpoint` | ✅ Verified, host + MPPM virtual client (2026-09-23) | `Assets/Scripts/RaceCheckpoint.cs` — trigger gate with `Kind`/`Order`; gates in `GameScene` run `Starting`(0) → `Checkpoint`(1) → `Checkpoint2`(2) → `Finish`(3). `Checkpoint3`–`Checkpoint6` were removed in `8b23a84` (duplicates); `Finish` was left at order 7, so finishing was silently rejected by the anti-shortcut check until it was renumbered to 3 on 2026-10-02. Crossing in order confirmed normal. **Not tried over a real remote connection** (Multiplayer Play Mode's virtual client is same-machine, no real network latency) |
 | `PlayerRaceProgress` | ✅ Verified on one machine, host + MPPM (user-reported, by 2026-10-07) | `Assets/Scripts/PlayerRaceProgress.cs`, added to `PlayerPrefab` — owner-writable checkpoint order (anti-shortcut: rejects out-of-sequence crossings), spawn/respawn placement, reports finish to `RaceStateMachine` via ServerRpc. The user reports the out-of-order rejection working when tested deliberately |
 | `DeathZone` | ✅ Verified single-player and non-host client via MPPM (2026-09-23) | `Assets/Scripts/DeathZone.cs`, attached to `Deathzone` (now a trigger) — respawns the player at their last checkpoint. Confirmed for the non-host client using the Multiplayer Play Mode virtual client. **Not confirmed over an actual remote/online connection** — MPPM's virtual client shares the host's machine, so real latency/replication timing hasn't been exercised |
-| `SpawnPointRegistry` | 🟨 Implemented, untested | `Assets/Scripts/SpawnPointRegistry.cs`, attached to `SpawnPoints` in `GameScene`; reads its own children (`Spawn_0`–`Spawn_3`) as spawn points, assigned per client by `OwnerClientId % count` |
+| `SpawnPointRegistry` | ✅ Verified on one machine (user, 2026-10-30) | `Assets/Scripts/SpawnPointRegistry.cs`, attached to `SpawnPoints` in `GameScene`; reads its own children (`Spawn_0`–`Spawn_3`) as spawn points, assigned per client by `OwnerClientId % count` |
 
 **Fixed during playtesting (2026-09-02):** respawn point was reading `checkpoint.transform.position` directly, but each gate's own transform pivot isn't at its visual/trigger center (`Checkpoint`'s pivot was at world x≈-16.17, past the Finish line) — falling near the checkpoint respawned the player behind Finish. `RaceCheckpoint` now carries an explicit `_respawnPoint` world-space field set to each gate's real center instead of trusting the transform.
 
