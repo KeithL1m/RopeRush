@@ -3,8 +3,10 @@
 Tracks implementation status against [GDD.md](GDD.md). Update this file whenever a
 GDD system is added, changed, or a milestone gate is crossed — don't let it drift.
 
-Last verified against repo: **2026-10-16** (end of session), commit `85d59ed`. Everything is committed (2026-10-16 work
-in `9e4a296` rope/final stretch and `85d59ed` character/modes/lobby). The Editor reports no compile errors.
+Last verified against repo: **2026-10-30** (end of session), on top of commit `12d88d7` ("Adding ragdoll effect to the
+players"; `f55e795` has the course rescale). The Editor reports no compile errors. `Backups/` (pre-rescale copies of
+`GameScene` and 4 obstacle prefabs) was committed in that work; remove it with `git rm -r Backups` once the rescaled
+course is trusted (git history keeps the originals anyway).
 
 ---
 ## 🎯 Playtest & tuning backlog (things to judge by feel, ideally with a real friend)
@@ -41,18 +43,50 @@ the last bounce pad `Bounce (8)`, marks all checkpoints before Finish as passed 
 bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: works well**). Keep F8/F9 until two-machine testing exists.
 
 ---
-## ▶ Start here next session (updated 2026-10-16, end of session)
+## ▶ Start here next session (updated 2026-10-30, end of session)
+
+### Done on 2026-10-30 (details in the sections below)
+- **Fixes:** `TagManager.asset` "Unable to parse" popup on every startup (bare `-` lines from a hand edit; the
+  `Obstacles` layer name had been lost in the Editor since `3215c8d`). Spawn rope hanging above the partner's head
+  (`RopeVisual` now ignores every collider on a player).
+- **UI:** lobby Mode dropdown enlarged (64 px rows, gaps). Slingshot target marker simplified to a small green `▼`, only
+  in range, no line/text.
+- **All one-machine tests passed** (user): game modes, Y Bot character + animations, lobby lineup, spawn points, rope
+  past 36 m, 15 s / 6 s Slingshot cooldowns.
+- **Course rescaled to 0.8** (player stays 5 m): pendulums bigger (ball 11.3 m, 8.3 m standing gaps) and evenly spread,
+  staggered swing (new `Pendulum.phaseOffsetDegrees`, 0/120/240), spinner bigger and faster (speed 0.5); respawn
+  points, F9 point, bounce force and hazard knockback scaled to match; sizes pushed into the obstacle prefabs and
+  redundant scene overrides cleaned up. **User playtest: "the whole course seems to function well."**
+- **Ragdoll Phase 1 done:** rig on `PlayerPrefab` (off), `RagdollRig.cs`, rebuild menu, `CharacterTest` preview,
+  comedic launch (tumble + flailing). Look approved by the user.
+
+### Still needs testing (quick, one machine)
+1. **Normal round after the ragdoll rig was added** (host + VP, restart the VP: `PlayerPrefab` changed). Should feel
+   exactly as before (the rig is off). Watch for anything new: odd collisions, the Slingshot pass-through, console
+   errors. This is the last Phase 1 check.
+2. **Spinner at speed 0.5** (`RotationX.prefab` `Rotator.speed` 0.4 → 0.5): set after the course playtest, not
+   re-played. Hard enough now? Try 0.6 if still easy.
+
+### Phase 2 decisions (the user will pick these at the start of next session; my recommendation first)
+| # | Question | Recommended | Alternative |
+|---|---|---|---|
+| 1 | Does a **Shove** (final stretch) ragdoll? | No at first, keep its 0.3 s stun; built as a per-hazard switch to try later | Shove ragdolls too |
+| 2 | **Getting up** | 0.4 s blend from the sprawl to standing (GDD) | Mixamo "Getting Up" clips (face up + face down), user downloads |
+| 3 | **Pull key** | Reuse RMB: means Pull when your partner is down | A separate key |
+| 4 | **Pull targets** | Only ragdolled partners (GDD) | Also partners just falling off an edge |
+| 5 | **Player layer** (so ragdoll limbs don't collide with other players over the network; players and the course are both on `Default` today) | Move `PlayerPrefab` to a new `Player` layer, check ground checks / rope / camera still work | Keep `Default`, ignore collisions per pair in code |
 
 ### Next session, in order
-1. **Test pass on the untested 2026-10-16 work** (host + MPPM; restart the virtual players, the prefab changed):
-   - ~~**Game modes** (item T)~~: ✅ user-tested 2026-10-30, dropdown resized the same day and approved.
-   - ~~**Y Bot character** (item C)~~: ✅ user-tested 2026-10-30, spawn rope fix ✅ too.
-   - ~~**Lobby lineup**~~: ✅ user-tested 2026-10-30 ("working perfectly").
-   - Also ✅ 2026-10-30 (user): spawn points (`SpawnPointRegistry`), rope past 36 m (rigid, thinning, darkening) and
-     the 15 s rival / 6 s teammate Slingshot cooldown. **Every one-machine test is now done.**
-2. ~~**Decide player vs course scale**~~: done 2026-10-30, course at 0.8 (see "Scale trial" below). **Play-test the
-   rescaled course** (restart the VP): full race, falls/respawns at each checkpoint, bounce pads (incl. `Bounce (8)` →
-   final platform), pendulum/spinner hits, F9 skip.
+1. The two quick tests above.
+2. The user picks the Phase 2 decisions.
+3. **Ragdoll Phase 2** (then 3–5, below). Post short progress updates; user tests after each phase.
+4. **Jump/fall animation** (small, item 4 below): needs a Mixamo clip from the user.
+5. Still blocked: two-machine Relay test + friend playtest (item 5 below).
+
+### Ragdoll + Pull plan and history
+1. ~~**Test pass on the untested 2026-10-16 work**~~: ✅ all done 2026-10-30 (game modes, Y Bot, lobby lineup, spawn
+   points, rope past 36 m, cooldowns).
+2. ~~**Decide player vs course scale**~~: done 2026-10-30, course at 0.8 (see "Scale trial" below), playtested ✅.
 3. **Ragdoll** (GDD §5.2) on the Y Bot skeleton, then **Pull (Recover)**. The last big M1 pieces. **Plan approved
    2026-10-30** (user: "go ahead"), 5 phases, user tests after each:
    1. Rig on `PlayerPrefab`, all off + a look preview in `CharacterTest`. ✅ **Done 2026-10-30** (look approved).
@@ -65,10 +99,11 @@ bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: wor
    4. Rope: attach to the hips while down; going down cancels Slingshot/Tow; no new moves, leash off while down.
    5. Pull (Recover): RMB on a ragdolled teammate in range reels them in (`TetherState.Recovering`, Tow's pattern);
       within ~6 m or on release they get up early.
-   Open decisions (recommendations, user hasn't picked yet; needed from Phase 2): Shove doesn't ragdoll at first
-   (per-hazard switch); get up with the 0.4 s blend (Mixamo get-up clips later); Pull on RMB; Pull only on ragdolled
-   partners, not ones just falling. A `PlayerRagdoll`-only collision matrix also needs players on their own layer
-   (players and course are both on `Default` today): decide in Phase 2.
+   Open decisions: see "Phase 2 decisions" above (the user picks them next session).
+   Phase 2 starting points: `SyncRushPlayerController.Knockback()` is the single owner-only entry for hits (callers:
+   `PendulumHazard`, `SpinnerHazard`, `PlayerShove`, and `PlayerTether`'s Slingshot launch, which must never ragdoll);
+   `RagdollRig.Launch/SetRagdolled/Hips`; `PlayerRaceProgress.Teleport` (respawn should end a ragdoll, and place feet
+   on the floor when getting up, see the Scale note); `PlayerAnimator` (animator is disabled while ragdolled).
    **Phase 1 details (2026-10-30):**
    - `Assets/Editor/BuildPlayerRagdoll.cs`: menu **Sync Rush → Rebuild Player Ragdoll**. Runs Unity's own Ragdoll Wizard
      (`UnityEditor.RagdollBuilder`, internal, called by reflection; total mass 20) on `PlayerPrefab/Model/YBot`, then
@@ -93,10 +128,21 @@ bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: wor
    (FBX for Unity, 30 fps, without skin, keyframe reduction none, into `Assets/Characters/Mixamo/`).
 5. Still blocked: **two-machine Relay test + friend playtest** (M0 and M1 gates; settles backlog ⭐ rows 1, 2, 11, 12).
 
-**Housekeeping, when convenient:** remove `[PushDebug]` logging; delete `Assets/Scenes/CharacterTest.unity` and
-`Assets/Characters/Mixamo/Preview/` once the character is settled; the `PlayerPrefab` `CapsuleCollider` height 6.41
-question (Scale note); Coplay AI generation (`generate_sfx`, 3D/animation tools) returns 401 / not found, so check
-the Coplay account if generated assets are wanted; official name check (app stores, trademarks) before renaming.
+**Housekeeping, when convenient:** remove `[PushDebug]` logging; delete `Assets/Scenes/CharacterTest.unity`,
+`Assets/Characters/Mixamo/Preview/` and `Assets/Scripts/RagdollPreview.cs` once the ragdoll is settled (the preview is
+useful until Phase 2 tuning is done); `git rm -r Backups` once the rescaled course is trusted; the
+`PlayerPrefab` `CapsuleCollider` height 6.41 question (Scale note); Coplay AI generation (`generate_sfx`,
+3D/animation tools) returns 401 / not found, so check the Coplay account if generated assets are wanted; official
+name check (app stores, trademarks) before renaming.
+**Small loose ends found 2026-10-30 (not urgent):** `Pendulum.speed` doesn't change swing speed (every pendulum swings
+once per 6.3 s; offer to make it work if varied speeds are wanted); `RotationPlat.prefab` speed is 60 but the three scene
+copies override it to 40 (push 40 into the prefab?); the outer `Bounce` script on `Bounce.prefab` is enabled (old notes
+said disabled; harmless, the stronger launch wins); `Assets/Prefabs/Player reference.prefab` (5 m Y Bot, user-made) is
+for size checks when building course pieces.
+**Coplay gotchas (2026-10-30):** with the MPPM virtual player open there are two Unity instances, so call
+`set_unity_project_root` with `Z:\Game Projects\New_Game` first. `save_scene` did a "Save As" to `Assets/GameScene.unity`
+instead of saving the open scene: save with `EditorSceneManager.SaveScene` via `execute_script` instead. The scene
+screenshot tool renders this URP project flat magenta, so ask the user to look instead.
 
 **Slingshot target marker simplified 2026-10-30 (user choice). ✅ User-tested same day: "working well", "definitely less distracting":** the user found the
 always-on preview too busy (green/amber distance text over the aimed player out to 72 m, plus a line to them). Now:
@@ -403,7 +449,7 @@ if Start Lobby says "Something went wrong connecting". `[PushDebug]` logging is 
 | # | Deliverable | Status | Notes |
 |---|---|---|---|
 | **M0** | Race state machine, checkpoints, placement, greybox straight course | 🟨 In progress | Greybox straight course built by hand in ProBuilder (`GameScene`: `Platform`, `Starting`/`Checkpoint`/`Finish` pole gates, `Deathzone`). `RaceStateMachine`, `RaceCheckpoint`, `PlayerRaceProgress`, `DeathZone`, `SpawnPointRegistry` written and wired onto those objects. **2026-09-04:** first real two-client test (host + Multiplayer Play Mode virtual player) — host/join/countdown/GO all fired correctly and remote player movement replicated well on both sides. Since then, every M0 system has been verified with host + MPPM on one machine. The only M0 item left is the two-machine Relay test, deferred 2026-10-07 because no second machine is available |
-| **M1** | Tether + ragdoll-on-impact, 4 players over Relay | 🟨 In progress | Slingshot tether works on one machine (user playtest 2026-10-07, see M1 section). Tow works on one machine (2026-10-12), feel deferred to a live test. Teams (2026-10-12, user-tested), the always-on simulated partner rope and the heavy-drag leash are built. Final stretch (rope SNAP, Shove, MVP/team result) built and user-tested on one machine 2026-10-16. Mixamo Y Bot is the character (2026-10-16), host-chosen game modes (Teams / Free-for-all) built. Not built yet: ragdoll (on the Y Bot skeleton), Recover |
+| **M1** | Tether + ragdoll-on-impact, 4 players over Relay | 🟨 In progress | Slingshot tether works on one machine (user playtest 2026-10-07, see M1 section). Tow works on one machine (2026-10-12), feel deferred to a live test. Teams (2026-10-12, user-tested), the always-on simulated partner rope and the heavy-drag leash are built. Final stretch (rope SNAP, Shove, MVP/team result) built and user-tested on one machine 2026-10-16. Mixamo Y Bot is the character (2026-10-16), host-chosen game modes (Teams / Free-for-all) built; both user-tested 2026-10-30. Course rescaled to 0.8 and playtested 2026-10-30. Ragdoll: Phase 1 of 5 done 2026-10-30 (rig on `PlayerPrefab`, off; `RagdollRig`; look approved). Not built yet: ragdoll triggering/networking (Phases 2–4), Pull/Recover (Phase 5) |
 | **M2** | Darts, status effects, ammo economy | ⬜ Not started | |
 | **M3** | Course generator, 15 chunks | ⬜ Not started | |
 | **M4** | Presentation pass | ⬜ Not started | |
