@@ -3,8 +3,8 @@
 Tracks implementation status against [GDD.md](GDD.md). Update this file whenever a
 GDD system is added, changed, or a milestone gate is crossed — don't let it drift.
 
-Last verified against repo: **2026-10-16**, on top of commit `ed19631` (all 2026-10-12 work is committed), plus
-uncommitted final-stretch work (see "Start here" item F). The Editor reports no compile errors.
+Last verified against repo: **2026-10-16** (end of session), commit `85d59ed`. Everything is committed (2026-10-16 work
+in `9e4a296` rope/final stretch and `85d59ed` character/modes/lobby). The Editor reports no compile errors.
 
 ---
 ## 🎯 Playtest & tuning backlog (things to judge by feel, ideally with a real friend)
@@ -40,7 +40,34 @@ the last bounce pad `Bounce (8)`, marks all checkpoints before Finish as passed 
 bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: works well**). Keep F8/F9 until two-machine testing exists.
 
 ---
-## ▶ Start here next session (updated 2026-10-16)
+## ▶ Start here next session (updated 2026-10-16, end of session)
+
+### Next session, in order
+1. **Test pass on the untested 2026-10-16 work** (host + MPPM; restart the virtual players, the prefab changed):
+   - **Game modes** (item T): host Mode dropdown, Teams vs Free-for-all, reassignment on switch, clients see the mode,
+     FFA has no partner rope and no team line in the results.
+   - **Y Bot character** (item C): team colour, idle/run, sprint, feet on ground, rope attach, camera. Judge foot
+     slide (backlog row 14).
+   - **Lobby lineup**: joiners stand side by side instead of on top of each other.
+2. **Decide player vs course scale** (backlog row 15, "Scale note" below). The user finds the player too small for the
+   course. Decide before ragdoll and before M3 chunks, since both get tuned/authored at one scale.
+3. **Ragdoll** (`RagdollController`, GDD §5.2) on the Y Bot skeleton, then **Pull (Recover)**. The last big M1 pieces.
+   **Present a plan first** (the user wants plans before big features, see "Working with the user").
+4. **Jump/fall animation** (small): Y Bot idles/runs in mid-air today. Needs a Mixamo jump/fall clip from the user
+   (FBX for Unity, 30 fps, without skin, keyframe reduction none, into `Assets/Characters/Mixamo/`).
+5. Still blocked: **two-machine Relay test + friend playtest** (M0 and M1 gates; settles backlog ⭐ rows 1, 2, 11, 12).
+
+**Housekeeping, when convenient:** remove `[PushDebug]` logging; delete `Assets/Scenes/CharacterTest.unity` and
+`Assets/Characters/Mixamo/Preview/` once the character is settled; the `PlayerPrefab` `CapsuleCollider` height 6.41
+question (Scale note); Coplay AI generation (`generate_sfx`, 3D/animation tools) returns 401 / not found, so check
+the Coplay account if generated assets are wanted; official name check (app stores, trademarks) before renaming.
+
+### Working with the user (learned 2026-10-16)
+- For big features: write up the plan and wait for "go" before building; post short progress updates during long
+  builds; flag anything uncertain or any deviation from the plan instead of silently choosing.
+- The user tests in Play Mode and reports back; record results in the relevant item and the backlog.
+- The user commits themselves; don't commit unless asked.
+
 
 **Scale note (2026-10-16, decision pending):** the user finds the player too small for the course now that it has a
 real model (backlog row 15). A 7 m player (model + collision, ×1.4) was started and **reverted at the user's request**;
@@ -58,7 +85,7 @@ real model (backlog row 15). A 7 m player (model + collision, ×1.4) was started
   height **6.41** in the working copy vs 5 in git. Not changed by Claude; user said leave it as is for testing.
 
 **C. Character: Mixamo Y Bot chosen as the default character (user, 2026-10-16). On `PlayerPrefab`, compiles, not yet
-seen in Play Mode, uncommitted.**
+confirmed in a Play Mode test. Committed `85d59ed`.**
 - Files: `Assets/Characters/Mixamo/Y Bot.fbx` (Humanoid, own avatar), `Y Bot@Idle.fbx`, `Y Bot@Running.fbx` (Humanoid,
   copy Y Bot's avatar, loop, root locked = in place, 30 fps). The user downloaded them; they'd landed in the project
   root (outside `Assets/`, not imported) and were moved.
@@ -78,7 +105,7 @@ when sprinting, feet on the ground, rope still attaches around the hips, camera 
 **Next: ragdoll (`RagdollController`, GDD §5.2) on this skeleton, then Pull (Recover).**
 
 **T. Game modes: host picks the mode in the lobby (user design 2026-10-16, replacing the same day's automatic
-"3 players = FFA via a GREEN team" version). Compiles, `LobbyScene` regenerated, untested in play, uncommitted.**
+"3 players = FFA via a GREEN team" version). Compiles, `LobbyScene` regenerated, not yet tested in play. Committed `85d59ed`.**
 - `GameMode.cs`: `GameModeId` + `GameModes.All`, one entry per mode (name, team count, max team size, whether players
   choose teams). **Add a future mode by adding an entry.** `GameModes.Current` resets to the default (Teams) for each
   new lobby; not remembered after a race (agreed for now).
@@ -100,7 +127,7 @@ Test (host + 2 VPs): default "Teams", columns shown, 3 players → 2v1; host swi
 coloured list, 3 different capsule/Y Bot colours; back to Teams → re-balanced; clients have no dropdown but see the
 mode; in game, FFA players have no partner rope and the results show no team line.
 
-**F. Final stretch built 2026-10-16 (GDD §5.6). ✅ All 6 test steps passed (user, host + MPPM, 2026-10-16). Uncommitted.** Feel still to judge with a real friend (backlog rows 11–13).
+**F. Final stretch built 2026-10-16 (GDD §5.6). ✅ All 6 test steps passed (user, host + MPPM, 2026-10-16). Committed `9e4a296`.** Feel still to judge with a real friend (backlog rows 11–13).
 - `RaceState.FinalStretch` (between `Racing` and `Results`). **Global**: the first player into `FinalStretchZone`
   starts it for everyone (user decision 2026-10-16). Reported like a finish: owner trigger → `PlayerRaceProgress`
   ServerRpc → `RaceStateMachine.ReportFinalStretch`. Finishes are accepted during `FinalStretch`.
@@ -140,7 +167,7 @@ Test (host + 1 VP, **same team**, VP restarted; press F9 to skip to the end, ✅
 5. Both finish: popup shows MVP and "BLUE/RED TEAM WINS" (or a draw on the same team).
 6. Different teams: a Slingshot anchored on the rival at the moment of the snap also snaps.
 
-**0. Heavy-drag leash implemented 2026-10-12. User tested it on one machine and said it "feels good now" (uncommitted at session end).** Leash length is still to be found by playtesting (backlog row 1). It's the parked "soft leash" idea in a
+**0. Heavy-drag leash implemented 2026-10-12. User tested it on one machine and said it "feels good now". Committed `da4ed74`.** Leash length is still to be found by playtesting (backlog row 1). It's the parked "soft leash" idea in a
 stronger form; the user chose it as better for the concept (cooperation enforced, and it gives the final-stretch snap
 its weight). How it works (`PlayerTether.UpdatePartnerPull`, each player's own machine, nothing new networked):
 - Teammates further apart than `_leashLength` (36 m, separate from slingshot range): the input-driven part of moving
@@ -167,13 +194,13 @@ respawn → no yank for 3 s.
 | HUD labels renamed "Tether" → "Slingshot" | ✅ User |
 | Rope visuals: sag that straightens with tension, white→red tint | ✅ User screenshot from the partner's (client) view, so rope state replicates. Shake past 36 m not specifically checked |
 
-**Fixed 2026-10-12 (uncommitted):** the rope was invisible in the first test. It attaches at capsule centre (2.5 m up)
+**Fixed 2026-10-12 (since committed):** the rope was invisible in the first test. It attaches at capsule centre (2.5 m up)
 and sagged up to 4 m, so its middle was buried in the floor. Sag is now capped at 12% of rope length (`_sagPerMetre`)
 and kept 0.4 m above the ground under the rope's midpoint (`_groundClearance`, a downward raycast, so it can
 still hang into gaps). Also, a player being held on someone's rope no longer draws their own range preview, which
 overlapped the rope. The preview-hiding change compiles but hasn't been seen in play yet.
 
-**2. Tow implemented 2026-10-12 (uncommitted). It works on one machine, and feel is deferred.** The user tested drag, strain
+**2. Tow implemented 2026-10-12 (committed `35c169c`). It works on one machine, and feel is deferred.** The user tested drag, strain
 and snap with host + MPPM, including an auto-running partner (F8). Verdict: it works as intended, but the pull still
 feels a bit weak. They chose to keep the current values (`_towSpeedFraction` 1.5, full pull at 20 m) and judge feel in
 a live two-player test, since auto-run can't show a human steering or real latency. If it still feels weak then,
@@ -197,7 +224,7 @@ partner closes 36 → 10 m in ~3–4 s. The rope also turns fully red at 20 m du
 (`SyncRushPlayerController._debugAutoRun`, shows `AUTO-RUN (F8)` top-left), so a virtual player can keep running
 while being towed on one machine. Remove it once two-machine testing exists.
 
-**3. Teams implemented 2026-10-12, untested (uncommitted).** See `PlayerRegistry` in the Foundation table. Also:
+**3. Teams implemented 2026-10-12 (committed `35a45d8`), since user-tested.** See `PlayerRegistry` in the Foundation table. Also:
 lobby team columns (`LobbyUI._teamButtons/_teamLists`, built by `RebuildLobbyUI`, so `LobbyScene` was regenerated),
 and rope targeting now prefers your partner. Slingshot: aimed, else partner, else nearest. Tow: partner, else nearest.
 Saving the prefab serialized every `PlayerTether` field, so tune Tow/rope values on the prefab now, not via code defaults.
@@ -219,7 +246,7 @@ points), not facing, so glancing back doesn't cut it. Before this, a towed playe
 backward, which with rivals was a strong grief. (3) **Slingshot cooldown on a rival is 15 s** (`_rivalCooldown`, first 12 s), 6 s
 on a teammate, because slingshotting a rival is mainly sabotage (launching them into hazards).
 
-**4. Always-on partner rope + simulated rope implemented 2026-10-12, untested in play (uncommitted).**
+**4. Always-on partner rope + simulated rope implemented 2026-10-12 (committed `da4ed74`).**
 - `Assets/Scripts/RopeVisual.cs`: a visual-only verlet rope with 24 points (`_ropeSegments`) and gravity. Constraints only
   pull segments together, so slack piles up. Points rest on the ground via a short raycast (players' capsules ignored),
   with friction. Rope length adapts like a retractable leash: slack = max(gap × 1.2, gap + 3 m), capped at 36 m, and
@@ -252,9 +279,7 @@ relevant than first thought.
 **Agreed order (2026-10-12):** Tow first (M1 fun question), then teams + always-on `Idle` rope + visual rope
 physics together, since they depend on each other (an always-visible rope needs to drape and swing to look right).
 
-**2. Pick the next feature** (open question, the user hasn't chosen yet):
-- **Tow**, the second rope move (recommended): the player in front pulls a trailing partner along with part of the leader's speed. It does more for the M1 question "is the tether fun?".
-- **Rope physics**: a simulated, visual-only rope (verlet points) that swings, whips on launch, and lies on the ground. The current rope is a fixed curve driven by tension, not physics. Polish, which could also wait for M4.
+**2. ~~Pick the next feature~~:** done (Tow and the simulated rope were both built 2026-10-12).
 
 **3. ~~Decision blocking ragdoll + Pull (Recover)~~:** decided 2026-10-16: Mixamo Y Bot (see "Start here" item C).
 
@@ -272,7 +297,7 @@ if Start Lobby says "Something went wrong connecting". `[PushDebug]` logging is 
 | # | Deliverable | Status | Notes |
 |---|---|---|---|
 | **M0** | Race state machine, checkpoints, placement, greybox straight course | 🟨 In progress | Greybox straight course built by hand in ProBuilder (`GameScene`: `Platform`, `Starting`/`Checkpoint`/`Finish` pole gates, `Deathzone`). `RaceStateMachine`, `RaceCheckpoint`, `PlayerRaceProgress`, `DeathZone`, `SpawnPointRegistry` written and wired onto those objects. **2026-09-04:** first real two-client test (host + Multiplayer Play Mode virtual player) — host/join/countdown/GO all fired correctly and remote player movement replicated well on both sides. Since then, every M0 system has been verified with host + MPPM on one machine. The only M0 item left is the two-machine Relay test, deferred 2026-10-07 because no second machine is available |
-| **M1** | Tether + ragdoll-on-impact, 4 players over Relay | 🟨 In progress | Slingshot tether works on one machine (user playtest 2026-10-07, see M1 section). Tow works on one machine (2026-10-12), feel deferred to a live test. Teams (2026-10-12, user-tested), the always-on simulated partner rope and the heavy-drag leash are built. Final stretch (rope SNAP, Shove, MVP/team result) built and user-tested on one machine 2026-10-16. Not built yet: ragdoll (needs a rigged character, choice still open), Recover |
+| **M1** | Tether + ragdoll-on-impact, 4 players over Relay | 🟨 In progress | Slingshot tether works on one machine (user playtest 2026-10-07, see M1 section). Tow works on one machine (2026-10-12), feel deferred to a live test. Teams (2026-10-12, user-tested), the always-on simulated partner rope and the heavy-drag leash are built. Final stretch (rope SNAP, Shove, MVP/team result) built and user-tested on one machine 2026-10-16. Mixamo Y Bot is the character (2026-10-16), host-chosen game modes (Teams / Free-for-all) built. Not built yet: ragdoll (on the Y Bot skeleton), Recover |
 | **M2** | Darts, status effects, ammo economy | ⬜ Not started | |
 | **M3** | Course generator, 15 chunks | ⬜ Not started | |
 | **M4** | Presentation pass | ⬜ Not started | |
@@ -354,7 +379,7 @@ All confirmed in single-player playtesting per the user (2026-09-23). **Not yet 
 - Active `Bounce` script is on the child pad (outer object's script is disabled to avoid double launches). `force` raised 27 → 30.8 (~1.3× height; apex ≈ force² / 40 at gravity 20, ≈ 24 m).
 
 **Housekeeping**
-- Obstacle scripts/prefabs moved out of `Assets/ObstacleCoursePack/` and are **uncommitted** — commit the new `.meta` files too or script references will break.
+- Obstacle scripts/prefabs moved out of `Assets/ObstacleCoursePack/` — since committed, with their `.meta` files.
 
 ## M1 systems (GDD §7.2)
 
