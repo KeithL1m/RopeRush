@@ -20,7 +20,7 @@ override code defaults, so tune them there. ⭐ = most important for the M1 gate
 | 4 | **Slingshot** | range 36 m, launch 12–40 m/s + 14 lift, tension 1.2 s | Felt right 2026-10-07. Re-check now that the leash exists: landing past the leash drags the anchor along. Good synergy or annoying? |
 | 5 | **Rival slingshot cooldown** | `Rival Cooldown` 15 s (teammate 6 s) | Still abusable for sabotage? Too long? |
 | 6 | **Rope look** | `RopeVisual`: slack ×1.2 / +3 m, damping 0.985, 24 points; `Snap Width Factor` 0.6 | Too floaty, stiff or long? Is the rigid thinning look clear enough past the leash? |
-| 7 | **Aim targeting** | `Aim Angle` 25° | Easy to pick the intended player in a crowd? |
+| 7 | **Aim targeting** | `Aim Angle` 25° | Easy to pick the intended player in a crowd? Marker simplified 2026-10-30 (below): still clear enough who you'll grab? |
 | 8 | **Everything over real Relay** (also the M0 gate) | — | Leash and Tow both read the partner's position ~0.1 s late: any rubber-banding? Slingshot and hazards with real latency? |
 | 9 | ~~**3-player teams**~~ | Decided 2026-10-16: the host picks Teams or Free-for-all in the lobby (see "Start here" item T) | — |
 | 10 | **Course layout** | greybox (2026-09-16) | User said it doesn't fully match what they're picturing yet |
@@ -44,10 +44,8 @@ bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: wor
 
 ### Next session, in order
 1. **Test pass on the untested 2026-10-16 work** (host + MPPM; restart the virtual players, the prefab changed):
-   - **Game modes** (item T): host Mode dropdown, Teams vs Free-for-all, reassignment on switch, clients see the mode,
-     FFA has no partner rope and no team line in the results.
-   - **Y Bot character** (item C): team colour, idle/run, sprint, feet on ground, rope attach, camera. Judge foot
-     slide (backlog row 14).
+   - ~~**Game modes** (item T)~~: ✅ user-tested 2026-10-30, dropdown resized the same day and approved.
+   - ~~**Y Bot character** (item C)~~: ✅ user-tested 2026-10-30, spawn rope fix ✅ too.
    - **Lobby lineup**: joiners stand side by side instead of on top of each other.
 2. **Decide player vs course scale** (backlog row 15, "Scale note" below). The user finds the player too small for the
    course. Decide before ragdoll and before M3 chunks, since both get tuned/authored at one scale.
@@ -61,6 +59,13 @@ bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: wor
 `Assets/Characters/Mixamo/Preview/` once the character is settled; the `PlayerPrefab` `CapsuleCollider` height 6.41
 question (Scale note); Coplay AI generation (`generate_sfx`, 3D/animation tools) returns 401 / not found, so check
 the Coplay account if generated assets are wanted; official name check (app stores, trademarks) before renaming.
+
+**Slingshot target marker simplified 2026-10-30 (user choice). ✅ User-tested same day: "working well", "definitely less distracting":** the user found the
+always-on preview too busy (green/amber distance text over the aimed player out to 72 m, plus a line to them). Now:
+nothing until someone is inside Slingshot range (36 m); then a small green `▼` over the player a press would pick, no
+text, no line. Removed from `PlayerTether`: the preview `LineRenderer`, `_previewRangeFactor`, `_previewWidth`, the
+amber out-of-range colour. (Their stale values stay in the prefab YAML until it's next saved; harmless.)
+Also clarified for the user: no rope between rivals / in FFA is by design; the rival rope only shows during a Slingshot.
 
 ### Working with the user (learned 2026-10-16)
 - For big features: write up the plan and wait for "go" before building; post short progress updates during long
@@ -84,8 +89,13 @@ real model (backlog row 15). A 7 m player (model + collision, ×1.4) was started
 - Unexplained: `PlayerPrefab`'s extra `CapsuleCollider` (non-trigger, alongside the `CharacterController`) is
   height **6.41** in the working copy vs 5 in git. Not changed by Claude; user said leave it as is for testing.
 
-**C. Character: Mixamo Y Bot chosen as the default character (user, 2026-10-16). On `PlayerPrefab`, compiles, not yet
-confirmed in a Play Mode test. Committed `85d59ed`.**
+**C. Character: Mixamo Y Bot chosen as the default character (user, 2026-10-16). Committed `85d59ed`. ✅ User-tested
+2026-10-30: "everything functioning well", animations fine.**
+- Rope bug found in that test (2026-10-30): at spawn the slack partner rope hung in the air ending above the partner's
+  head, on both peers, until a Tow/Slingshot pulled it straight. Cause: `RopeVisual.RestOnGround` skipped only the
+  `CharacterController`, so slack points rested on top of `PlayerPrefab`'s extra root `CapsuleCollider` (6.41 m, top
+  ~0.7 m above the head). Fix: skip any collider under a `CharacterController` (`GetComponentInParent`), which also
+  covers future ragdoll limb colliders. ✅ User-confirmed 2026-10-30: rope now placed correctly at spawn.
 - Files: `Assets/Characters/Mixamo/Y Bot.fbx` (Humanoid, own avatar), `Y Bot@Idle.fbx`, `Y Bot@Running.fbx` (Humanoid,
   copy Y Bot's avatar, loop, root locked = in place, 30 fps). The user downloaded them; they'd landed in the project
   root (outside `Assets/`, not imported) and were moved.
@@ -105,7 +115,10 @@ when sprinting, feet on the ground, rope still attaches around the hips, camera 
 **Next: ragdoll (`RagdollController`, GDD §5.2) on this skeleton, then Pull (Recover).**
 
 **T. Game modes: host picks the mode in the lobby (user design 2026-10-16, replacing the same day's automatic
-"3 players = FFA via a GREEN team" version). Compiles, `LobbyScene` regenerated, not yet tested in play. Committed `85d59ed`.**
+"3 players = FFA via a GREEN team" version). Committed `85d59ed`. ✅ User-tested 2026-10-30: modes work.**
+- 2026-10-30, user feedback "dropdown way too small, options too grouped up": the default TMP option rows were 20 px
+  with 26 pt text, so the options overlapped. `RebuildLobbyUI` now makes the dropdown 320×70 (matches START GAME), with
+  64 px option rows, a 6 px gap and a small green marker on the selected mode. `LobbyScene` regenerated. ✅ User: "new UI looks good" (2026-10-30).
 - `GameMode.cs`: `GameModeId` + `GameModes.All`, one entry per mode (name, team count, max team size, whether players
   choose teams). **Add a future mode by adding an entry.** `GameModes.Current` resets to the default (Teams) for each
   new lobby; not remembered after a race (agreed for now).

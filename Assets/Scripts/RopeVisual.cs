@@ -262,7 +262,9 @@ namespace SyncRush
             if (!Physics.Raycast(p + Vector3.up * probe, Vector3.down, out RaycastHit hit, probe + _thickness,
                                  Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                 return;
-            if (hit.collider is CharacterController) return; // don't drape over the players themselves
+            // Don't drape over the players themselves: any collider on a player, not just the CharacterController
+            // (PlayerPrefab's extra 6.41 m CapsuleCollider held slack rope above the partner's head at spawn).
+            if (hit.collider.GetComponentInParent<CharacterController>() != null) return;
 
             float floor = hit.point.y + _thickness;
             if (p.y >= floor) return;

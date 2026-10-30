@@ -291,7 +291,7 @@ public class RebuildLobbyUI
         var mdrt = modeDropdownGO.GetComponent<RectTransform>();
         mdrt.anchorMin = mdrt.anchorMax = mdrt.pivot = new Vector2(0.5f, 0.5f);
         mdrt.anchoredPosition = new Vector2(-380, -150);
-        mdrt.sizeDelta = new Vector2(300, 60);
+        mdrt.sizeDelta = new Vector2(320, 70); // same height as START GAME
         modeDropdownGO.GetComponent<Image>().color = grey;
         foreach (var t in modeDropdownGO.GetComponentsInChildren<TextMeshProUGUI>(true))
         {
@@ -308,9 +308,29 @@ public class RebuildLobbyUI
         var arrowText = MakeTMP("ArrowText", arrow, "v", 26, new Color(0.8f, 0.8f, 0.8f), Vector2.zero, new Vector2(30, 30));
         arrowText.raycastTarget = false;
         var modeDropdown = modeDropdownGO.GetComponent<TMP_Dropdown>();
-        modeDropdown.template.sizeDelta = new Vector2(0, 160);
+        // The default option rows are 20 px tall, so 26 pt text overflowed into the next row. TMP_Dropdown
+        // stacks rows at the Item's height and shrinks the Template to fit, so 300 px only caps a long list.
+        const float itemHeight = 64f, itemGap = 6f;
+        modeDropdown.template.sizeDelta = new Vector2(0, 300);
+        var content = (RectTransform)modeDropdown.template.Find("Viewport/Content");
+        content.sizeDelta = new Vector2(0, itemHeight + itemGap);
+        var item = (RectTransform)content.Find("Item");
+        item.sizeDelta = new Vector2(0, itemHeight);
+        // Background inset by half the gap on each side, so neighbouring rows read as separate boxes.
+        var itemBg = (RectTransform)item.Find("Item Background");
+        itemBg.offsetMin = new Vector2(4, itemGap * 0.5f);
+        itemBg.offsetMax = new Vector2(-4, -itemGap * 0.5f);
+        // Checkmark (a sprite-less square): a small marker on the left of the selected mode.
+        var check = (RectTransform)item.Find("Item Checkmark");
+        check.sizeDelta = new Vector2(12, 12);
+        check.anchoredPosition = new Vector2(20, 0);
+        check.GetComponent<Image>().color = new Color(0.1f, 0.7f, 0.3f);
+        var itemLabel = (RectTransform)item.Find("Item Label");
+        itemLabel.offsetMin = new Vector2(40, 0);
+        itemLabel.offsetMax = new Vector2(-10, 0);
+        itemLabel.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
         var modeCaption = MakeTMP("ModeCaption", modeDropdownGO.transform, "MODE", 20, new Color(0.7f, 0.7f, 0.7f),
-                                  new Vector2(0, 50), new Vector2(300, 30));
+                                  new Vector2(0, 55), new Vector2(320, 30));
         modeCaption.raycastTarget = false;
         var leaveBtn        = MakeButton("LeaveButton", waitingPanel.transform, "LEAVE LOBBY",     new Vector2(0, -235), new Vector2(280, 60), red);
 

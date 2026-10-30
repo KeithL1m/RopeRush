@@ -126,10 +126,6 @@ namespace SyncRush
                  "With nobody aimed at, the nearest player in range is picked.")]
         [SerializeField] private float _aimAngle = 25f;
 
-        [Tooltip("Players out to this multiple of max rope length still get a (grey) range preview, " +
-                 "so you can see how much closer you need to get.")]
-        [SerializeField] private float _previewRangeFactor = 2f;
-
         [Header("Rope Visual (greybox)")]
         [Tooltip("Optional. Needs a vertex-colour shader (e.g. Sprites/Default) for the tension tint to show.")]
         [SerializeField] private Material _ropeMaterial;
@@ -140,9 +136,6 @@ namespace SyncRush
         [Tooltip("Rope width at the snap point, as a fraction of normal width. Past max length the rope stays " +
                  "rigidly straight and thins toward this, like rope stretched to its limit.")]
         [SerializeField] private float _snapWidthFactor = 0.6f;
-
-        [Tooltip("Width of the owner-only preview line to the aimed player while not anchored.")]
-        [SerializeField] private float _previewWidth = 0.15f;
 
         [Tooltip("Points in the simulated rope. More = smoother, slightly more cost.")]
         [SerializeField] private int _ropeSegments = 24;
@@ -174,10 +167,8 @@ namespace SyncRush
         private NetworkPlayer _player;
         private CharacterController _cc;
         private Transform _visual;
-        // Owner only: who the range preview points at, and whether a press would tether them.
+        // Owner only: who a Slingshot press would pick right now (in range only), marked over their head.
         private PlayerTether _previewTarget;
-        private bool _previewInRange;
-        private LineRenderer _previewLine;
         private RopeVisual _partnerRope; // drawn by the lower-id teammate of each pair
         private RopeVisual _rivalRope;   // this player's Slingshot on a non-teammate
         // Last rival the rival rope was drawn to, and its tension, so it can still snap after the
@@ -218,12 +209,6 @@ namespace SyncRush
             Material ropeMaterial = _ropeMaterial != null ? _ropeMaterial : new Material(Shader.Find("Sprites/Default"));
             _partnerRope = RopeVisual.Create(transform, "PartnerRope", ropeMaterial, _ropeSegments);
             _rivalRope   = RopeVisual.Create(transform, "RivalRope", ropeMaterial, _ropeSegments);
-
-            _previewLine = gameObject.AddComponent<LineRenderer>();
-            _previewLine.positionCount = 2;
-            _previewLine.useWorldSpace = true;
-            _previewLine.material = ropeMaterial;
-            _previewLine.enabled = false;
 
             _snapAudio = gameObject.AddComponent<AudioSource>();
             _snapAudio.playOnAwake = false;
@@ -324,15 +309,12 @@ namespace SyncRush
 
         private void Update()
         {
-            // Range preview: who a press would pick right now, else who you're heading toward but
-            // still out of range. BeginAnchor re-picks on press.
+            // Target marker: who a press would pick right now. Nothing out of range, so the screen stays
+            // clean (user, 2026-10-30). BeginAnchor re-picks on press.
             _previewTarget = null;
             if (!IsOwner || !IsSpawned || !CanStartContract) return;
 
             _previewTarget = FindTarget(_maxRopeLength);
-            _previewInRange = _previewTarget != null;
-            if (!_previewInRange)
-                _previewTarget = FindTarget(_maxRopeLength * _previewRangeFactor);
         }
 
         private void FixedUpdate()
@@ -625,13 +607,12 @@ namespace SyncRush
                     Physics.IgnoreCollision(_cc, other, ignore);
         }
 
-        // ── Rope visuals: partner rope + rival rope on every peer, range preview for the owner ──
+        // ── Rope visuals: partner rope + rival rope on every peer ──
 
         private void LateUpdate()
         {
             DrawPartnerRope();
             DrawRivalRope();
-            DrawPreview();
         }
 
         /// <summary>
@@ -729,32 +710,13 @@ namespace SyncRush
                       _ropeWidth * Mathf.Lerp(1f, _snapWidthFactor, strain));
         }
 
-        /// <summary>Owner-only range preview: straight and thin so it never reads as a real rope.</summary>
-        private void DrawPreview()
-        {
-            if (_previewTarget == null)
-            {
-                _previewLine.enabled = false;
-                return;
-            }
-
-            Color color = _previewInRange ? ReadyColor : OutOfRangeColor;
-            color.a = 0.85f;
-            _previewLine.SetPosition(0, AttachPoint);
-            _previewLine.SetPosition(1, _previewTarget.AttachPoint);
-            _previewLine.startColor = _previewLine.endColor = color;
-            _previewLine.widthMultiplier = _previewWidth;
-            _previewLine.enabled = true;
-        }
-
         // ── Owner: HUD (TEMP greybox OnGUI, replaced in the M4 presentation pass) ──
 
         private static readonly Color ReadyColor = new(0.2f, 0.75f, 0.35f);
         private static readonly Color CooldownColor = new(0.45f, 0.45f, 0.5f);
         private static readonly Color TowColor = new(0.25f, 0.55f, 0.95f);
-        // Amber, not grey: the course floor is light grey, so a grey preview line vanished against it.
-        private static readonly Color OutOfRangeColor = new(1f, 0.6f, 0.1f);
         private GUIStyle _hudLabel;
+        private GUIStyle _markerLabel;
 
         /// <summary>
         /// Bottom-centre tether status for the local player: tension while anchored, otherwise
@@ -791,7 +753,7 @@ namespace SyncRush
             }
 
             if (_previewTarget != null)
-                DrawTargetMarker(_previewTarget, _previewInRange);
+                DrawTargetMarker(_previewTarget);
 
             int rows = 0;
             foreach (var pair in _nextAllowedTime)
@@ -813,10 +775,10 @@ namespace SyncRush
         }
 
         /// <summary>
-        /// Marker above the aimed player's head with their distance: green if a press would tether
-        /// them, grey with the max range if they're still too far.
+        /// Small green ▼ above the head of the player a Slingshot press would pick. Only shown in range,
+        /// with no line or distance text (user, 2026-10-30: the always-on preview was too busy).
         /// </summary>
-        private void DrawTargetMarker(PlayerTether target, bool inRange)
+        private void DrawTargetMarker(PlayerTether target)
         {
             Camera cam = Camera.main;
             if (cam == null) return;
@@ -825,13 +787,11 @@ namespace SyncRush
             Vector3 screen = cam.WorldToScreenPoint(head);
             if (screen.z <= 0f) return; // behind the camera
 
-            float distance = Vector3.Distance(AttachPoint, target.AttachPoint);
-            string text = inRange ? $"▼ SLINGSHOT {distance:0}m" : $"▼ {distance:0}m / {_maxRopeLength:0}m";
-
-            var rect = new Rect(screen.x - 120f, Screen.height - screen.y - 32f, 240f, 32f);
+            _markerLabel ??= new GUIStyle(_hudLabel) { fontSize = 30 };
+            var rect = new Rect(screen.x - 20f, Screen.height - screen.y - 36f, 40f, 36f);
             Color previous = GUI.contentColor;
-            GUI.contentColor = inRange ? ReadyColor : OutOfRangeColor;
-            GUI.Label(rect, text, _hudLabel);
+            GUI.contentColor = ReadyColor;
+            GUI.Label(rect, "▼", _markerLabel);
             GUI.contentColor = previous;
         }
 
