@@ -28,6 +28,7 @@ override code defaults, so tune them there. ⭐ = most important for the M1 gate
 | 12 | **Shove** | `PlayerShove`: range 5 m (centre to centre), cone 60°, force 16 m/s + 6 up, stun 0.3 s, cooldown 1.5 s | Funny or frustrating? Can you get shoved off the platform edge (intended)? **Shoving teammates** (GDD design, user unsure 2026-10-16): fun betrayal or feels wrong? |
 | 15 | ~~**Player vs course scale**~~ | Decided 2026-10-30: player stays 5 m, course shrunk to 0.8, pendulums/spinner enlarged | Done (see "Scale trial" under "Start here"). Still judge in play: bounce height, knockback distance |
 | 14 | **Run animation speed** | `PlayerAnimator._runAnimSpeed` 9 m/s, blend tree Running at 7 m/s | Do the feet slide or skate when running / sprinting? |
+| 16 | **Ragdoll launch comedy** | `RagdollRig`: boost 1.25, extra lift 4, tumble 12 rad/s, limb flail 8 m/s, limb spin 15 rad/s | Funny enough? Too chaotic? Does the 25% extra distance feel unfair in a race? |
 | 13 | **Snap look & sound** | `RopeVisual`: recoil 30 m/s (35% when slack), fade 1.5 s; `RopeSnap_TEMP.wav` (synthesized placeholder) | Does the SNAP read clearly? Replace the sound in M4 |
 
 **Name (2026-10-12):** "Sync Rush" stays the working title for now. **"Rope Rush" is the top contender for the official
@@ -52,8 +53,42 @@ bounce and hold W to land in the FinalStretchZone; **user-tested 2026-10-16: wor
 2. ~~**Decide player vs course scale**~~: done 2026-10-30, course at 0.8 (see "Scale trial" below). **Play-test the
    rescaled course** (restart the VP): full race, falls/respawns at each checkpoint, bounce pads (incl. `Bounce (8)` →
    final platform), pendulum/spinner hits, F9 skip.
-3. **Ragdoll** (`RagdollController`, GDD §5.2) on the Y Bot skeleton, then **Pull (Recover)**. The last big M1 pieces.
-   **Present a plan first** (the user wants plans before big features, see "Working with the user").
+3. **Ragdoll** (GDD §5.2) on the Y Bot skeleton, then **Pull (Recover)**. The last big M1 pieces. **Plan approved
+   2026-10-30** (user: "go ahead"), 5 phases, user tests after each:
+   1. Rig on `PlayerPrefab`, all off + a look preview in `CharacterTest`. ✅ **Done 2026-10-30** (look approved).
+   2. `RagdollController`: pendulum/spinner hits over 8 m/s ragdoll the owner; capsule follows the hips; get up after
+      1.5–2.5 s (by severity, once settled, cap 4 s) with a 0.4 s blend; ends early on respawn / race reset / rope snap;
+      no input, hits ignored while down, "KNOCKED DOWN" label. Slingshot launches (also `Knockback`) never ragdoll:
+      hazards opt in.
+   3. Networking: owner NetworkVariable down/up + RPC with the hit velocity; remotes run a local ragdoll whose hips are
+      pulled toward the replicated root.
+   4. Rope: attach to the hips while down; going down cancels Slingshot/Tow; no new moves, leash off while down.
+   5. Pull (Recover): RMB on a ragdolled teammate in range reels them in (`TetherState.Recovering`, Tow's pattern);
+      within ~6 m or on release they get up early.
+   Open decisions (recommendations, user hasn't picked yet; needed from Phase 2): Shove doesn't ragdoll at first
+   (per-hazard switch); get up with the 0.4 s blend (Mixamo get-up clips later); Pull on RMB; Pull only on ragdolled
+   partners, not ones just falling. A `PlayerRagdoll`-only collision matrix also needs players on their own layer
+   (players and course are both on `Default` today): decide in Phase 2.
+   **Phase 1 details (2026-10-30):**
+   - `Assets/Editor/BuildPlayerRagdoll.cs`: menu **Sync Rush → Rebuild Player Ragdoll**. Runs Unity's own Ragdoll Wizard
+     (`UnityEditor.RagdollBuilder`, internal, called by reflection; total mass 20) on `PlayerPrefab/Model/YBot`, then
+     switches it off: kinematic, colliders disabled, layer `PlayerRagdoll` (new, slot 9), Interpolate, speculative CCD,
+     solver iterations 12/4. Re-runnable (removes the old ragdoll first). Result: 11 bodies, 10 CharacterJoints.
+   - `Assets/Scripts/RagdollRig.cs` on `YBot`: `SetRagdolled(bool)` (bodies dynamic + colliders + animator off),
+     `SetVelocity`, `Hips`, extra gravity so the ragdoll falls at 20 m/s² like the player (Unity's is 9.81).
+   - `TagManager.asset` was rewritten by Unity in its newer format (serializedVersion 3, trailing empty slots trimmed).
+   - `PlayerTether.SetIgnoreCollision` now skips disabled colliders (the Slingshot pass-through collected the anchor's
+     ragdoll bone colliders too).
+   - Preview (TEMP, `Assets/Scripts/RagdollPreview.cs`): `CharacterTest` has `Ragdoll Preview - Limp` / `- Launched`
+     (5 m Y Bots, ragdoll built the same way), a 200 m floor and a moved camera. Play the scene: after 1 s one goes
+     limp, the other is launched at 20 + 7 up (the pendulum hit); Space replays.
+   - User look test 2026-10-30: "doesn't look too floopy or stiff" ✅, but wanted more force / "freak out" on the launch
+     for comedy. Added `RagdollRig.Launch(hitVelocity)`: velocity × `_launchBoost` 1.25 + `_extraLift` 4 m/s up,
+     head-over-heels `_tumble` 12 rad/s around the axis sideways to the hit, random per-limb `_limbFlail` 8 m/s +
+     `_limbSpin` 15 rad/s (cosmetic, may differ per peer); `maxAngularVelocity` raised 7 → 50 so the spin isn't capped.
+     The boost means ragdolled hits fly ~25% further than plain knockback (Phase 2: the capsule follows the hips).
+     ✅ User 2026-10-30: "the new launch looks good", values saved on `PlayerPrefab` (kept for now; feel in real
+     play is backlog row 16). **Phase 1 done.**
 4. **Jump/fall animation** (small): Y Bot idles/runs in mid-air today. Needs a Mixamo jump/fall clip from the user
    (FBX for Unity, 30 fps, without skin, keyframe reduction none, into `Assets/Characters/Mixamo/`).
 5. Still blocked: **two-machine Relay test + friend playtest** (M0 and M1 gates; settles backlog ⭐ rows 1, 2, 11, 12).

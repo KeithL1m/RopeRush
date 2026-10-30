@@ -603,7 +603,7 @@ namespace SyncRush
         private void SetIgnoreCollision(Collider[] others, bool ignore)
         {
             foreach (var other in others)
-                if (other != null) // anchor may have left mid-flight
+                if (other != null && other.enabled) // anchor may have left mid-flight; ragdoll bone colliders are off
                     Physics.IgnoreCollision(_cc, other, ignore);
         }
 
